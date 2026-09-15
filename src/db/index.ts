@@ -59,15 +59,28 @@ export async function readData(): Promise<Data> {
 export async function seed() {
   await db.transaction("rw", db.tables, async () => {
     const now = new Date().toISOString();
+    const obsoletePac = await db.accounts.get("bpm-pac");
+    if (obsoletePac) {
+      const hasMovements = await db.transactions
+        .filter(
+          (transaction) =>
+            transaction.accountId === "bpm-pac" ||
+            transaction.transferAccountId === "bpm-pac",
+        )
+        .count();
+      const hasAllocations = await db.allocations
+        .where("accountId")
+        .equals("bpm-pac")
+        .count();
+      if (
+        !hasMovements &&
+        !hasAllocations &&
+        obsoletePac.initialBalance === 0
+      ) {
+        await db.accounts.delete("bpm-pac");
+      }
+    }
     const additionalAccounts: Data["accounts"] = [
-      {
-        id: "bpm-pac",
-        name: "BPM PAC",
-        type: "checking",
-        initialBalance: 0,
-        createdAt: now,
-        archived: false,
-      },
       {
         id: "contanti",
         name: "Contanti",

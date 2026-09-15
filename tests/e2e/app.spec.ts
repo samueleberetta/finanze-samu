@@ -152,7 +152,11 @@ test("telefono piccolo: navigazione, form e movimenti senza scorrimento laterale
   await page.goto("/dashboard/");
   const nav = page.getByRole("navigation", { name: "Navigazione rapida" });
   await expect(nav).toBeVisible();
-  await page.getByRole("button", { name: "Nuovo movimento" }).click();
+  const movementButton = page.getByRole("button", { name: "Nuovo movimento" });
+  await expect(movementButton).toHaveCSS("position", "fixed");
+  const buttonBox = await movementButton.boundingBox();
+  expect(buttonBox?.x).toBeGreaterThan(240);
+  await movementButton.click();
   const amount = page.getByLabel("Importo (€)", { exact: true });
   await expect(amount).toHaveCSS("font-size", "16px");
   await amount.fill("15");
@@ -189,4 +193,7 @@ test("telefono piccolo: navigazione, form e movimenti senza scorrimento laterale
     path: "/tmp/finanze-mobile-settings.png",
     fullPage: true,
   });
+  await page.goto("/accounts/");
+  await expect(page.getByText("Contanti", { exact: true })).toBeVisible();
+  await expect(page.getByText("BPM PAC", { exact: true })).toHaveCount(0);
 });

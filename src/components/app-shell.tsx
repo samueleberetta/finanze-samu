@@ -231,8 +231,12 @@ export function AppShell({ section = "dashboard" }: { section?: string }) {
               </h1>
               <p>{subtitles[section]}</p>
             </div>
-            <button className="button primary" onClick={() => setModal(true)}>
-              <Plus size={19} /> Nuovo movimento
+            <button
+              className="button primary transaction-cta"
+              onClick={() => setModal(true)}
+              aria-label="Nuovo movimento"
+            >
+              <Plus size={22} /> <span>Nuovo movimento</span>
             </button>
           </div>
           {section === "dashboard" && <Dashboard d={d} />}

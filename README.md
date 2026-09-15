@@ -31,7 +31,7 @@ I conti liquidi sono calcolati a partire da saldo iniziale e movimenti. I conti 
 
 Le allocazioni sono classificazioni virtuali per conto e obiettivo e non alterano i saldi. Non possono superare il saldo del conto né la liquidità complessiva. Una spesa consuma prima la relativa allocazione per spese correnti; le allocazioni protette non vengono ridotte automaticamente. Se un movimento le renderebbe superiori al saldo, viene annullato: libera prima gli importi nella pagina Allocazioni, quindi registra il movimento. I trasferimenti non spostano automaticamente le allocazioni.
 
-Il database viene inizializzato con BPM €2.500, Revolut €200, deposito €70, BPM PAC €0, Contanti €0 e i tre fondi Anima per €1.951,73: patrimonio iniziale **€4.721,73**. BPM PAC è disponibile come destinazione per il trasferimento manuale mensile di €250 da BPM. La liquidità iniziale resta non allocata, poiché non è stata specificata una distribuzione confermata. I fondi sono associati al lungo termine. Il capitale versato iniziale è sconosciuto e resta vuoto, non viene inventato dal valore corrente.
+Il database viene inizializzato con BPM €2.500, Revolut €200, deposito €70, Contanti €0 e i tre fondi Anima nel conto Investimenti BPM per €1.951,73: patrimonio iniziale **€4.721,73**. La liquidità iniziale resta non allocata, poiché non è stata specificata una distribuzione confermata. I fondi sono associati al lungo termine. Il capitale versato iniziale è sconosciuto e resta vuoto, non viene inventato dal valore corrente.
 
 Per investimenti esistenti, inserisci il capitale residuo noto e il valore attuale. Per nuovi acquisti, crea prima il fondo con valore zero, poi registra un movimento investimento. Nei disinvestimenti il capitale residuo noto è ridotto proporzionalmente al valore liquidato; il rendimento mostrato riguarda la posizione residua, non include rendimenti realizzati storici. Il PAC è descrittivo, senza addebiti automatici.
 
@@ -40,6 +40,8 @@ Il suggerimento di allocazione è deterministico: copertura mensile mancante, em
 ## Privacy e persistenza
 
 Le dieci tabelle sono in IndexedDB sul browser e sull'origine che ospita l'app. Vercel distribuisce soltanto file statici: nessun dato finanziario viene inviato al server. Non ci sono font remoti, tracker o integrazioni esterne. La cache del service worker contiene solo il codice dell'app, non i dati finanziari. Il provider hosting può avere normali log delle richieste dei file statici.
+
+La CLI Supabase è inizializzata e il repository è collegato al progetto `ohdnwrjhdtrevnviapsj` per gli sviluppi successivi. L'app attuale non importa il client Supabase e non invia ancora autenticazione o dati finanziari al progetto remoto.
 
 Non esiste sincronizzazione fra dispositivi o browser. Cambiare dominio/porta significa un archivio diverso. Cancellare i dati del sito, usare navigazione privata o la pulizia automatica del browser può eliminare il database. I dati non sono cifrati dall'app: la protezione del dispositivo e del profilo browser è responsabilità dell'utente.
 
