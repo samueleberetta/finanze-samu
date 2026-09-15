@@ -211,6 +211,8 @@ describe("Contabilità in centesimi", () => {
     expect(calculateNetWorth(await readData()).netWorth).toBe(341402);
   });
   it("esegue il PAC una sola volta dal giorno 3 e conserva il patrimonio", async () => {
+    await db.settings.update("main", { emergencyFundTarget: 90000 });
+    await saveAllocation("bpm", { emergency: 90000 });
     const settings = (await readData()).settings[0];
     const [year, month] = settings.autoPacLastMonth!.split("-").map(Number);
     const next = new Date(year, month, 3);
@@ -293,6 +295,8 @@ describe("Contabilità in centesimi", () => {
     ).toBe(7);
   });
   it("obiettivi sommano allocazioni e investimenti una sola volta", async () => {
+    await db.settings.update("main", { emergencyFundTarget: 1 });
+    await saveAllocation("bpm", { emergency: 1 });
     await saveAllocation("bpm", { longterm: 100 });
     const d = await readData();
     expect(

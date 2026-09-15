@@ -98,72 +98,57 @@ export function Dashboard({ d }: { d: Data }) {
           </span>
         </Card>
       </div>
-      <Card className="emergency">
-        <div className="emergency-icon">
-          <ShieldCheck size={27} />
-        </div>
-        <div className="grow">
-          <div className="row">
-            <h3>Prima di tutto, la tranquillità</h3>
-            <span className="pill">Fondo emergenza</span>
-          </div>
-          <p>
-            <strong>{money(emergency)}</strong>{" "}
-            <span className="muted">di {money(s.emergencyFundTarget)}</span>
-          </p>
-          <Progress value={ep} />
-          <div className="row muted">
-            <span>
-              {s.monthlyExpenseEstimate
-                ? `${(emergency / s.monthlyExpenseEstimate).toFixed(1)} mesi di spese coperti`
-                : "Stima spese non impostata"}
-            </span>
-            <span>{Math.round(ep)}%</span>
-          </div>
-        </div>
-      </Card>
       <div className="section-title">
-        <h2>I tuoi prossimi traguardi</h2>
+        <h2>I tuoi traguardi</h2>
         <Link href="/goals/">
           Tutti gli obiettivi <ArrowRight size={16} />
         </Link>
       </div>
-      <div className="goal-grid">
+      <Card className="goal-progress-list">
+        <div className="goal-progress-row emergency-row">
+          <span className="icon-tile">
+            <ShieldCheck size={21} />
+          </span>
+          <div className="goal-progress-content">
+            <div className="row">
+              <strong>Fondo emergenza</strong>
+              <span>
+                {money(emergency)} / {money(s.emergencyFundTarget)}
+              </span>
+            </div>
+            <Progress value={ep} />
+          </div>
+          <strong className="goal-percent">
+            {Math.min(100, Math.round(ep))}%
+          </strong>
+        </div>
         {[...d.goals]
           .sort((a, b) => a.priority - b.priority)
           .map((g) => {
             const p = calculateGoalProgress(g, d.allocations, d.investments);
             const Icon = icons[g.id as keyof typeof icons] || Sprout;
             return (
-              <Card key={g.id} className={`goal-card goal-${g.id}`}>
+              <div key={g.id} className={`goal-progress-row goal-${g.id}`}>
                 <span className="icon-tile">
                   <Icon size={21} />
                 </span>
-                <span className="goal-priority">
-                  {g.priority <= 2
-                    ? "Alta priorità"
-                    : g.priority === 3
-                      ? "Media priorità"
-                      : "Bassa priorità"}
-                </span>
-                <h3>{g.name}</h3>
-                <div className="goal-value">{money(p.amount)}</div>
-                <p className="muted">
-                  {g.targetAmount
-                    ? `di ${money(g.targetAmount)}`
-                    : "Orizzonte > 10 anni"}
-                </p>
-                {p.percent !== null ? (
-                  <Progress value={p.percent} />
-                ) : (
-                  <div className="longterm-label">
-                    Un passo alla volta, ogni mese
+                <div className="goal-progress-content">
+                  <div className="row">
+                    <strong>{g.name}</strong>
+                    <span>
+                      {money(p.amount)}
+                      {g.targetAmount ? ` / ${money(g.targetAmount)}` : ""}
+                    </span>
                   </div>
-                )}
-              </Card>
+                  <Progress value={p.percent ?? 0} />
+                </div>
+                <strong className="goal-percent">
+                  {p.percent === null ? "—" : `${Math.round(p.percent)}%`}
+                </strong>
+              </div>
             );
           })}
-      </div>
+      </Card>
       <div className="bottom-grid">
         <Card>
           <div className="row">

@@ -549,6 +549,46 @@ small {
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
+.goal-progress-list {
+  padding: 8px 22px;
+}
+.goal-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+}
+.goal-progress-row:last-child {
+  border-bottom: 0;
+}
+.goal-progress-content {
+  flex: 1;
+  min-width: 0;
+}
+.goal-progress-content .row {
+  font-size: 13px;
+}
+.goal-progress-content .row span {
+  color: var(--muted);
+  text-align: right;
+}
+.goal-progress-content .progress {
+  height: 8px;
+  margin-top: 8px;
+}
+.goal-percent {
+  width: 42px;
+  text-align: right;
+  font-size: 13px;
+}
+.goal-edit {
+  min-width: 62px;
+  justify-content: flex-end;
+}
+.emergency-row .progress span {
+  background: var(--green);
+}
 .goal-card {
   padding: 20px 18px;
   position: relative;

@@ -144,6 +144,24 @@ export async function saveAllocation(
       )
     )
       throw new Error("Seleziona un conto disponibile.");
+    const settings = d.settings[0];
+    const emergencyAllocated = sum(
+      d.allocations
+        .filter((allocation) => allocation.pillar === "emergency")
+        .map((allocation) => allocation.amount),
+    );
+    const addsToGoals = Object.entries(values).some(
+      ([key, amount]) =>
+        key !== "liquidity" && key !== "emergency" && amount > 0,
+    );
+    if (
+      addsToGoals &&
+      emergencyAllocated + (values.emergency ?? 0) <
+        settings.emergencyFundTarget
+    )
+      throw new Error(
+        `Completa prima il fondo emergenza fino a ${settings.emergencyFundTarget / 100} €.`,
+      );
     for (const [key, amount] of Object.entries(values)) {
       if (!Number.isSafeInteger(amount) || amount < 0)
         throw new Error("Allocazione non valida.");
@@ -295,6 +313,15 @@ export async function applyAutomaticPac(
           .map((allocation) => allocation.amount),
       );
     if (available < amount) {
+      result = "insufficient";
+      return;
+    }
+    const emergencyAllocated = sum(
+      d.allocations
+        .filter((allocation) => allocation.pillar === "emergency")
+        .map((allocation) => allocation.amount),
+    );
+    if (emergencyAllocated < settings.emergencyFundTarget) {
       result = "insufficient";
       return;
     }

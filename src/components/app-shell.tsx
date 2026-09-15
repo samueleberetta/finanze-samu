@@ -68,7 +68,7 @@ export function AppShell({ section = "dashboard" }: { section?: string }) {
           setToast("PAC automatico: €250 trasferiti da BPM agli investimenti.");
         if (result === "insufficient")
           setToast(
-            "PAC automatico non eseguito: liquidità BPM disponibile insufficiente.",
+            "PAC automatico non eseguito: completa il fondo emergenza o libera liquidità BPM.",
           );
         setReady(true);
       })

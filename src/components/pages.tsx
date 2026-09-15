@@ -263,6 +263,10 @@ export function Accounts({ d, notify }: Props) {
 export function Goals({ d, notify }: Props) {
   const [edit, setEdit] = useState<Goal | null>(null),
     [error, setError] = useState("");
+  const emergency = sum(
+    d.allocations.filter((a) => a.pillar === "emergency").map((a) => a.amount),
+  );
+  const emergencyTarget = d.settings[0].emergencyFundTarget;
   return (
     <>
       <div className="section-title">
@@ -286,47 +290,56 @@ export function Goals({ d, notify }: Props) {
           <Plus size={17} /> Nuovo obiettivo
         </button>
       </div>
-      <div className="two-grid">
+      <Card className="goal-progress-list">
+        <div className="goal-progress-row emergency-row">
+          <div className="goal-progress-content">
+            <div className="row">
+              <strong>Fondo emergenza · priorità assoluta</strong>
+              <span>
+                {money(emergency)} / {money(emergencyTarget)}
+              </span>
+            </div>
+            <Progress value={(emergency / emergencyTarget) * 100} />
+          </div>
+          <strong className="goal-percent">
+            {Math.min(100, Math.round((emergency / emergencyTarget) * 100))}%
+          </strong>
+        </div>
         {[...d.goals]
           .sort((a, b) => a.priority - b.priority)
           .map((g) => {
             const p = calculateGoalProgress(g, d.allocations, d.investments);
             return (
-              <Card key={g.id}>
-                <div className="row">
-                  <h3>{g.name}</h3>
-                  <span className="pill">
-                    Priorità {g.priority} ·{" "}
-                    {g.status === "active"
-                      ? "Attivo"
-                      : g.status === "paused"
-                        ? "In pausa"
-                        : "Completato"}
-                  </span>
+              <div className="goal-progress-row" key={g.id}>
+                <div className="goal-progress-content">
+                  <div className="row">
+                    <strong>{g.name}</strong>
+                    <span>
+                      {money(p.amount)}
+                      {g.targetAmount
+                        ? ` / ${money(g.targetAmount)}`
+                        : " · senza target"}
+                    </span>
+                  </div>
+                  <Progress value={p.percent ?? 0} />
                 </div>
-                <p className="muted">{g.description}</p>
-                <h2>
-                  {money(p.amount)}{" "}
-                  <small>
-                    {g.targetAmount
-                      ? `/ ${money(g.targetAmount)}`
-                      : "senza target"}
-                  </small>
-                </h2>
-                {p.percent !== null && <Progress value={p.percent} />}
+                <strong className="goal-percent">
+                  {p.percent === null ? "—" : `${Math.round(p.percent)}%`}
+                </strong>
                 <button
-                  className="text-link"
+                  className="text-link goal-edit"
+                  aria-label={`Modifica ${g.name}`}
                   onClick={() => {
                     setError("");
                     setEdit(g);
                   }}
                 >
-                  Modifica obiettivo
+                  Modifica
                 </button>
-              </Card>
+              </div>
             );
           })}
-      </div>
+      </Card>
       {edit && (
         <Modal
           title={edit.name || "Nuovo obiettivo"}
