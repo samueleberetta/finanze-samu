@@ -129,7 +129,6 @@ export async function seed() {
         await db.investments.update("globale", { currentValue: 63443 });
         await db.goals.update("longterm", { currentAllocatedAmount: 189124 });
         await db.settings.update("main", {
-          dataVersion: 2,
           autoPacEnabled: true,
           autoPacAmount: 25000,
           autoPacDay: 3,

@@ -33,7 +33,7 @@ describe("Contabilità in centesimi", () => {
       liquidAssets: 151278,
       investments: 189124,
     });
-    expect(calculateAvailableToAllocate(d)).toBe(151278);
+    expect(calculateAvailableToAllocate(d)).toBe(0);
     expect(d.accounts.some((a) => a.id === "bpm-pac")).toBe(false);
     expect(d.accounts.find((a) => a.id === "contanti")?.initialBalance).toBe(0);
     expect(d.investments.every((i) => i.investedCapital === undefined)).toBe(
@@ -142,7 +142,7 @@ describe("Contabilità in centesimi", () => {
     await saveAllocation("bpm", { emergency: 70000, liquidity: 50000 });
     let d = await readData();
     expect(calculateNetWorth(d).netWorth).toBe(340402);
-    expect(calculateAvailableToAllocate(d)).toBe(31278);
+    expect(calculateAvailableToAllocate(d)).toBe(0);
     await expect(saveAllocation("bpm", { auto: 3221 })).rejects.toThrow();
     d = await readData();
     expect(d.allocations).toHaveLength(2);

@@ -305,13 +305,17 @@ export async function applyAutomaticPac(
         (investment.monthlyContribution ?? 0) > 0,
     );
     if (!account || !funds.length) return;
+    const protectedAmount = sum(
+      d.allocations
+        .filter(
+          (allocation) =>
+            allocation.accountId === account.id &&
+            allocation.pillar !== "liquidity",
+        )
+        .map((allocation) => allocation.amount),
+    );
     const available =
-      accountBalance(account, d.transactions, d.investments) -
-      sum(
-        d.allocations
-          .filter((allocation) => allocation.accountId === account.id)
-          .map((allocation) => allocation.amount),
-      );
+      accountBalance(account, d.transactions, d.investments) - protectedAmount;
     if (available < amount) {
       result = "insufficient";
       return;
@@ -357,6 +361,18 @@ export async function applyAutomaticPac(
         date,
         notes: "PAC automatico mensile",
       });
+    }
+    let remaining = amount;
+    for (const allocation of d.allocations.filter(
+      (item) => item.accountId === account.id && item.pillar === "liquidity",
+    )) {
+      const used = Math.min(remaining, allocation.amount);
+      await db.allocations.update(allocation.id, {
+        amount: allocation.amount - used,
+        updatedAt: new Date().toISOString(),
+      });
+      remaining -= used;
+      if (!remaining) break;
     }
     await db.settings.update("main", { autoPacLastMonth: month });
     result = "applied";

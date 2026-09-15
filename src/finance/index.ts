@@ -115,8 +115,16 @@ export function calculateGoalProgress(
 export function calculateAvailableToAllocate(
   d: Pick<Data, "accounts" | "transactions" | "investments" | "allocations">,
 ) {
-  return (
-    calculateNetWorth(d).liquidAssets - sum(d.allocations.map((a) => a.amount))
+  const declaredOpeningLiquidity = sum(
+    d.accounts
+      .filter((account) => account.type !== "investment")
+      .map((account) => account.initialBalance),
+  );
+  return Math.max(
+    0,
+    calculateNetWorth(d).liquidAssets -
+      declaredOpeningLiquidity -
+      sum(d.allocations.map((allocation) => allocation.amount)),
   );
 }
 export function validateAllocations(

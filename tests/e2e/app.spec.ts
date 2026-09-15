@@ -6,6 +6,7 @@ test("dashboard, movimento, allocazione confermata e persistenza", async ({
   await expect(
     page.getByText("3.404,02", { exact: false }).first(),
   ).toBeVisible();
+  await expect(page.locator(".available h2")).toContainText("0,00");
   await page.getByRole("button", { name: "Nuovo movimento" }).click();
   await page.getByLabel("Tipo di movimento").selectOption("income");
   await page.getByLabel("Importo (€)", { exact: true }).fill("1500");
