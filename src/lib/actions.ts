@@ -316,15 +316,6 @@ export async function applyAutomaticPac(
       result = "insufficient";
       return;
     }
-    const emergencyAllocated = sum(
-      d.allocations
-        .filter((allocation) => allocation.pillar === "emergency")
-        .map((allocation) => allocation.amount),
-    );
-    if (emergencyAllocated < settings.emergencyFundTarget) {
-      result = "insufficient";
-      return;
-    }
     const totalWeight = sum(funds.map((fund) => fund.monthlyContribution ?? 0));
     let assigned = 0;
     for (const [index, fund] of funds.entries()) {
