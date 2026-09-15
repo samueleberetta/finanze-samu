@@ -4,7 +4,13 @@ export const metadata: Metadata = {
   title: "Finanze Samu — Il tuo spazio finanziario",
   description: "Finanza personale, salvata esclusivamente sul tuo dispositivo.",
   manifest: "/manifest.webmanifest",
-  icons: { icon: "/favicon.svg", apple: "/icon-192.png" },
+  icons: {
+    icon: [
+      { url: "/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

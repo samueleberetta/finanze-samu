@@ -2,7 +2,8 @@ const CACHE = "finanze-vercel-v1";
 const SHELL = [
   "/dashboard/",
   "/manifest.webmanifest",
-  "/favicon.svg",
+  "/favicon-32.png",
+  "/apple-touch-icon.png",
   "/icon-192.png",
   "/icon-512.png",
 ];
