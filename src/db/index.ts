@@ -58,8 +58,29 @@ export async function readData(): Promise<Data> {
 }
 export async function seed() {
   await db.transaction("rw", db.tables, async () => {
-    if (await db.settings.count()) return;
     const now = new Date().toISOString();
+    const additionalAccounts: Data["accounts"] = [
+      {
+        id: "bpm-pac",
+        name: "BPM PAC",
+        type: "checking",
+        initialBalance: 0,
+        createdAt: now,
+        archived: false,
+      },
+      {
+        id: "contanti",
+        name: "Contanti",
+        type: "checking",
+        initialBalance: 0,
+        createdAt: now,
+        archived: false,
+      },
+    ];
+    for (const account of additionalAccounts) {
+      if (!(await db.accounts.get(account.id))) await db.accounts.add(account);
+    }
+    if (await db.settings.count()) return;
     await db.settings.put({
       id: "main",
       monthlyExpenseEstimate: 50000,
@@ -90,6 +111,7 @@ export async function seed() {
           type: "investment",
           initialBalance: 195173,
         },
+        ...additionalAccounts,
       ].map((a) => ({
         ...a,
         createdAt: now,

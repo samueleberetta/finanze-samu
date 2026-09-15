@@ -32,9 +32,18 @@ describe("Contabilità in centesimi", () => {
       investments: 195173,
     });
     expect(calculateAvailableToAllocate(d)).toBe(277000);
+    expect(d.accounts.find((a) => a.id === "bpm-pac")?.initialBalance).toBe(0);
+    expect(d.accounts.find((a) => a.id === "contanti")?.initialBalance).toBe(0);
     expect(d.investments.every((i) => i.investedCapital === undefined)).toBe(
       true,
     );
+  });
+  it("aggiunge BPM PAC e Contanti anche a un archivio esistente", async () => {
+    await db.accounts.bulkDelete(["bpm-pac", "contanti"]);
+    await seed();
+    const d = await readData();
+    expect(d.accounts.some((a) => a.id === "bpm-pac")).toBe(true);
+    expect(d.accounts.some((a) => a.id === "contanti")).toBe(true);
   });
   it("converte gli importi senza errori floating point", () => {
     expect(cents("0,29")).toBe(29);
