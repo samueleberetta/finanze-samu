@@ -4,7 +4,7 @@ test("dashboard, movimento, allocazione confermata e persistenza", async ({
 }) => {
   await page.goto("/dashboard/");
   await expect(
-    page.getByText("4.721,73", { exact: false }).first(),
+    page.getByText("3.404,02", { exact: false }).first(),
   ).toBeVisible();
   await page.getByRole("button", { name: "Nuovo movimento" }).click();
   await page.getByLabel("Tipo di movimento").selectOption("income");
@@ -12,7 +12,7 @@ test("dashboard, movimento, allocazione confermata e persistenza", async ({
   await page.getByLabel("Descrizione").fill("Stipendio di prova");
   await page.getByRole("button", { name: "Registra movimento" }).click();
   await expect(
-    page.getByText("6.221,73", { exact: false }).first(),
+    page.getByText("4.904,02", { exact: false }).first(),
   ).toBeVisible();
   await page
     .getByRole("link", { name: "Allocazioni", exact: true })
@@ -20,7 +20,7 @@ test("dashboard, movimento, allocazione confermata e persistenza", async ({
     .click();
   await page.getByRole("button", { name: "Suggerisci allocazione" }).click();
   await expect(page.getByLabel("Spese correnti (€)")).toHaveValue("500.00");
-  await expect(page.getByLabel("Fondo emergenza (€)")).toHaveValue("3000.00");
+  await expect(page.getByLabel("Fondo emergenza (€)")).toHaveValue("2232.20");
   await page.getByRole("button", { name: "Conferma allocazione" }).click();
   await expect(
     page.getByText("Allocazione confermata.", { exact: true }),
@@ -30,7 +30,7 @@ test("dashboard, movimento, allocazione confermata e persistenza", async ({
     page.getByText("Allocazioni attuali", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("3.000,00", { exact: false }).first(),
+    page.getByText("2.232,20", { exact: false }).first(),
   ).toBeVisible();
 });
 test("mobile, tema e tutte le pagine offline", async ({ page, context }) => {
@@ -78,9 +78,9 @@ test("mobile, tema e tutte le pagine offline", async ({ page, context }) => {
   await page.getByRole("button", { name: "Nuovo movimento" }).click();
   await page.getByLabel("Importo (€)", { exact: true }).fill("12.50");
   await page.getByRole("button", { name: "Registra movimento" }).click();
-  await expect(page.locator(".wealth-value")).toContainText("4.709,23");
+  await expect(page.locator(".wealth-value")).toContainText("3.391,52");
   await page.reload();
-  await expect(page.locator(".wealth-value")).toContainText("4.709,23");
+  await expect(page.locator(".wealth-value")).toContainText("3.391,52");
   await page.screenshot({
     path: "/tmp/finanze-mobile-dark.png",
     fullPage: true,
@@ -140,7 +140,7 @@ test("desktop senza errori di pagina", async ({ page }) => {
   page.on("pageerror", (e) => errors.push(e.message));
   await page.setViewportSize({ width: 1440, height: 1100 });
   await page.goto("/dashboard/");
-  await expect(page.locator(".wealth-value")).toContainText("4.721,73");
+  await expect(page.locator(".wealth-value")).toContainText("3.404,02");
   await page.screenshot({ path: "/tmp/finanze-desktop.png", fullPage: true });
   expect(errors).toEqual([]);
 });

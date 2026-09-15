@@ -31,6 +31,7 @@ import {
 import { SettingsPage } from "./settings";
 import { TransactionForm } from "./transaction-form";
 import { Modal } from "./ui";
+import { applyAutomaticPac } from "@/lib/actions";
 const nav = [
   { id: "dashboard", name: "Panoramica", icon: LayoutDashboard },
   { id: "transactions", name: "Movimenti", icon: ArrowLeftRight },
@@ -61,7 +62,16 @@ export function AppShell({ section = "dashboard" }: { section?: string }) {
     [offline, setOffline] = useState(false);
   useEffect(() => {
     seed()
-      .then(() => setReady(true))
+      .then(() => applyAutomaticPac())
+      .then((result) => {
+        if (result === "applied")
+          setToast("PAC automatico: €250 trasferiti da BPM agli investimenti.");
+        if (result === "insufficient")
+          setToast(
+            "PAC automatico non eseguito: liquidità BPM disponibile insufficiente.",
+          );
+        setReady(true);
+      })
       .catch((e) =>
         setError(`Impossibile aprire l’archivio locale: ${e.message}`),
       );

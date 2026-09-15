@@ -93,7 +93,51 @@ export async function seed() {
     for (const account of additionalAccounts) {
       if (!(await db.accounts.get(account.id))) await db.accounts.add(account);
     }
-    if (await db.settings.count()) return;
+    const existingSettings = await db.settings.get("main");
+    if (existingSettings) {
+      if ((existingSettings.dataVersion ?? 1) < 2) {
+        const currentMonth = today().slice(0, 7);
+        const targets: Record<string, number> = {
+          bpm: 123220,
+          revolut: 20849,
+          deposito: 7209,
+        };
+        const transactions = await db.transactions.toArray();
+        for (const [id, target] of Object.entries(targets)) {
+          const account = await db.accounts.get(id);
+          if (!account) continue;
+          const movementDelta = transactions.reduce(
+            (total, transaction) =>
+              total +
+              (transaction.accountId === id
+                ? transaction.type === "income" ||
+                  transaction.type === "withdrawal"
+                  ? transaction.amount
+                  : -transaction.amount
+                : transaction.type === "transfer" &&
+                    transaction.transferAccountId === id
+                  ? transaction.amount
+                  : 0),
+            0,
+          );
+          await db.accounts.update(id, {
+            initialBalance: target - movementDelta,
+          });
+        }
+        await db.investments.update("america", { currentValue: 64010 });
+        await db.investments.update("bilanciato", { currentValue: 61671 });
+        await db.investments.update("globale", { currentValue: 63443 });
+        await db.goals.update("longterm", { currentAllocatedAmount: 189124 });
+        await db.settings.update("main", {
+          dataVersion: 2,
+          autoPacEnabled: true,
+          autoPacAmount: 25000,
+          autoPacDay: 3,
+          autoPacLastMonth: currentMonth,
+        });
+      }
+      return;
+    }
     await db.settings.put({
       id: "main",
       monthlyExpenseEstimate: 50000,
@@ -102,27 +146,32 @@ export async function seed() {
       firstDayOfMonth: 1,
       weights: { auto: 50, longterm: 25, casa: 20, giappone: 5 },
       theme: "light",
+      dataVersion: 2,
+      autoPacEnabled: true,
+      autoPacAmount: 25000,
+      autoPacDay: 3,
+      autoPacLastMonth: today().slice(0, 7),
     });
     await db.accounts.bulkPut(
       [
-        { id: "bpm", name: "BPM", type: "checking", initialBalance: 250000 },
+        { id: "bpm", name: "BPM", type: "checking", initialBalance: 123220 },
         {
           id: "revolut",
           name: "Revolut",
           type: "checking",
-          initialBalance: 20000,
+          initialBalance: 20849,
         },
         {
           id: "deposito",
           name: "Revolut deposito",
           type: "deposit",
-          initialBalance: 7000,
+          initialBalance: 7209,
         },
         {
           id: "investimenti",
           name: "Investimenti BPM",
           type: "investment",
-          initialBalance: 195173,
+          initialBalance: 0,
         },
         ...additionalAccounts,
       ].map((a) => ({
@@ -167,20 +216,20 @@ export async function seed() {
         },
       ].map((g) => ({
         ...g,
-        currentAllocatedAmount: g.id === "longterm" ? 195173 : 0,
+        currentAllocatedAmount: g.id === "longterm" ? 189124 : 0,
         status: "active",
         createdAt: now,
       })) as Data["goals"],
     );
     await db.investments.bulkPut(
       [
-        { id: "america", name: "Anima America A", currentValue: 66058 },
+        { id: "america", name: "Anima America A", currentValue: 64010 },
         {
           id: "bilanciato",
           name: "Anima ESaloGo Bilanciato A",
-          currentValue: 63644,
+          currentValue: 61671,
         },
-        { id: "globale", name: "Anima Valore Globale A", currentValue: 65471 },
+        { id: "globale", name: "Anima Valore Globale A", currentValue: 63443 },
       ].map((i) => ({
         ...i,
         accountId: "investimenti",

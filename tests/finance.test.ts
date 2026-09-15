@@ -8,10 +8,12 @@ import {
   calculateNetWorth,
   cents,
   suggestAllocation,
+  sum,
   validateAllocations,
 } from "@/finance";
 import {
   mutate,
+  applyAutomaticPac,
   saveAllocation,
   saveInvestment,
   saveTransaction,
@@ -27,11 +29,11 @@ describe("Contabilità in centesimi", () => {
   it("inizializza i saldi senza raddoppiare gli investimenti", async () => {
     const d = await readData();
     expect(calculateNetWorth(d)).toEqual({
-      netWorth: 472173,
-      liquidAssets: 277000,
-      investments: 195173,
+      netWorth: 340402,
+      liquidAssets: 151278,
+      investments: 189124,
     });
-    expect(calculateAvailableToAllocate(d)).toBe(277000);
+    expect(calculateAvailableToAllocate(d)).toBe(151278);
     expect(d.accounts.some((a) => a.id === "bpm-pac")).toBe(false);
     expect(d.accounts.find((a) => a.id === "contanti")?.initialBalance).toBe(0);
     expect(d.investments.every((i) => i.investedCapital === undefined)).toBe(
@@ -93,14 +95,14 @@ describe("Contabilità in centesimi", () => {
       description: "",
     });
     const d = await readData();
-    expect(calculateNetWorth(d).netWorth).toBe(472173);
+    expect(calculateNetWorth(d).netWorth).toBe(340402);
     expect(
       accountBalance(
         d.accounts.find((a) => a.id === "revolut")!,
         d.transactions,
         d.investments,
       ),
-    ).toBe(70000);
+    ).toBe(70849);
     expect(calculateMonthlyCashflow(d.transactions, today()).expense).toBe(0);
   });
   it("rifiuta stesso conto, saldo insufficiente e date future", async () => {
@@ -137,17 +139,17 @@ describe("Contabilità in centesimi", () => {
     ).rejects.toThrow();
   });
   it("le allocazioni non cambiano i saldi e rispettano ciascun conto", async () => {
-    await saveAllocation("bpm", { emergency: 200000, liquidity: 50000 });
+    await saveAllocation("bpm", { emergency: 70000, liquidity: 50000 });
     let d = await readData();
-    expect(calculateNetWorth(d).netWorth).toBe(472173);
-    expect(calculateAvailableToAllocate(d)).toBe(27000);
-    await expect(saveAllocation("bpm", { auto: 1 })).rejects.toThrow();
+    expect(calculateNetWorth(d).netWorth).toBe(340402);
+    expect(calculateAvailableToAllocate(d)).toBe(31278);
+    await expect(saveAllocation("bpm", { auto: 3221 })).rejects.toThrow();
     d = await readData();
     expect(d.allocations).toHaveLength(2);
     expect(validateAllocations(d, d.allocations)).toBe(true);
   });
   it("consuma le spese correnti e protegge le allocazioni obiettivo", async () => {
-    await saveAllocation("bpm", { emergency: 200000, liquidity: 50000 });
+    await saveAllocation("bpm", { emergency: 70000, liquidity: 50000 });
     await saveTransaction({
       accountId: "bpm",
       type: "expense",
@@ -173,7 +175,7 @@ describe("Contabilità in centesimi", () => {
     d = await readData();
     expect(d.transactions).toHaveLength(1);
     expect(d.allocations.find((a) => a.pillar === "emergency")?.amount).toBe(
-      200000,
+      70000,
     );
   });
   it("investimento e disinvestimento conservano il patrimonio; valore manuale lo aggiorna", async () => {
@@ -187,9 +189,9 @@ describe("Contabilità in centesimi", () => {
       description: "",
     });
     let d = await readData();
-    expect(calculateNetWorth(d).netWorth).toBe(472173);
+    expect(calculateNetWorth(d).netWorth).toBe(340402);
     expect(d.investments.find((i) => i.id === "america")?.currentValue).toBe(
-      71058,
+      69010,
     );
     await saveTransaction({
       accountId: "bpm",
@@ -201,15 +203,34 @@ describe("Contabilità in centesimi", () => {
       description: "",
     });
     d = await readData();
-    expect(calculateNetWorth(d).netWorth).toBe(472173);
+    expect(calculateNetWorth(d).netWorth).toBe(340402);
     await saveInvestment({
       ...d.investments.find((i) => i.id === "america")!,
-      currentValue: 67058,
+      currentValue: 65010,
     });
-    expect(calculateNetWorth(await readData()).netWorth).toBe(473173);
+    expect(calculateNetWorth(await readData()).netWorth).toBe(341402);
+  });
+  it("esegue il PAC una sola volta dal giorno 3 e conserva il patrimonio", async () => {
+    const settings = (await readData()).settings[0];
+    const [year, month] = settings.autoPacLastMonth!.split("-").map(Number);
+    const next = new Date(year, month, 3);
+    const date = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-03`;
+    expect(await applyAutomaticPac(date)).toBe("applied");
+    expect(await applyAutomaticPac(date)).toBe("already-applied");
+    const d = await readData();
+    const automatic = d.transactions.filter((transaction) =>
+      transaction.id.startsWith("auto-pac-"),
+    );
+    expect(automatic).toHaveLength(3);
+    expect(sum(automatic.map((transaction) => transaction.amount))).toBe(25000);
+    expect(calculateNetWorth(d)).toEqual({
+      netWorth: 340402,
+      liquidAssets: 126278,
+      investments: 214124,
+    });
   });
   it("rollback atomico quando il versamento compromette allocazioni protette", async () => {
-    await saveAllocation("bpm", { emergency: 250000 });
+    await saveAllocation("bpm", { emergency: 123220 });
     await expect(
       saveTransaction({
         accountId: "bpm",
@@ -224,7 +245,7 @@ describe("Contabilità in centesimi", () => {
     const d = await readData();
     expect(d.investmentTransactions).toHaveLength(0);
     expect(d.transactions).toHaveLength(0);
-    expect(calculateNetWorth(d).investments).toBe(195173);
+    expect(calculateNetWorth(d).investments).toBe(189124);
   });
   it("calcola il mese contabile e gestisce entrate zero", () => {
     expect(calculateMonthlyCashflow([], today()).savingsRate).toBeNull();
@@ -280,7 +301,7 @@ describe("Contabilità in centesimi", () => {
         d.allocations,
         d.investments,
       ),
-    ).toEqual({ amount: 195273, percent: null });
+    ).toEqual({ amount: 189224, percent: null });
   });
   it("convalida backup completo e rifiuta schema, importi, riferimenti e duplicati", async () => {
     const d = await readData();

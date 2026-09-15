@@ -85,6 +85,11 @@ export interface Settings {
   firstDayOfMonth: number;
   weights: Record<string, number>;
   theme: "light" | "dark";
+  dataVersion?: number;
+  autoPacEnabled?: boolean;
+  autoPacAmount?: number;
+  autoPacDay?: number;
+  autoPacLastMonth?: string;
 }
 export interface Snapshot {
   id: string;

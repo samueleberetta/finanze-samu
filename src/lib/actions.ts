@@ -16,6 +16,8 @@ import {
   validateAllocations,
 } from "@/finance";
 export const uid = () => crypto.randomUUID();
+export type AutomaticPacResult =
+  "applied" | "already-applied" | "not-due" | "insufficient" | "unavailable";
 async function snapshot(d: Data) {
   const worth = calculateNetWorth(d);
   await db.snapshots.put({
@@ -245,12 +247,103 @@ export async function saveSettings(s: Settings) {
     s.firstDayOfMonth > 28 ||
     !Number.isInteger(s.firstDayOfMonth) ||
     s.emergencyFundTarget <= 0 ||
+    (s.autoPacEnabled &&
+      (!Number.isSafeInteger(s.autoPacAmount) ||
+        (s.autoPacAmount ?? 0) <= 0 ||
+        !Number.isInteger(s.autoPacDay ?? 0) ||
+        (s.autoPacDay ?? 0) < 1 ||
+        (s.autoPacDay ?? 0) > 28)) ||
     (Object.keys(s.weights).length > 0 &&
       sum(Object.values(s.weights)) !== 100) ||
     Object.values(s.weights).some((v) => v < 0 || !Number.isInteger(v))
   )
     throw new Error("Controlla i parametri. I pesi devono sommare 100%.");
   await db.settings.put(s);
+}
+export async function applyAutomaticPac(
+  date = today(),
+): Promise<AutomaticPacResult> {
+  let result: AutomaticPacResult = "unavailable";
+  await mutate(async (d) => {
+    const settings = d.settings[0];
+    const month = date.slice(0, 7);
+    const day = Number(date.slice(8, 10));
+    if (!settings?.autoPacEnabled) return;
+    if (settings.autoPacLastMonth === month) {
+      result = "already-applied";
+      return;
+    }
+    if (day < (settings.autoPacDay ?? 3)) {
+      result = "not-due";
+      return;
+    }
+    const amount = settings.autoPacAmount ?? 25000;
+    const account = d.accounts.find(
+      (a) => a.id === "bpm" && !a.archived && a.type !== "investment",
+    );
+    const funds = d.investments.filter(
+      (investment) =>
+        investment.accountId === "investimenti" &&
+        (investment.monthlyContribution ?? 0) > 0,
+    );
+    if (!account || !funds.length) return;
+    const available =
+      accountBalance(account, d.transactions, d.investments) -
+      sum(
+        d.allocations
+          .filter((allocation) => allocation.accountId === account.id)
+          .map((allocation) => allocation.amount),
+      );
+    if (available < amount) {
+      result = "insufficient";
+      return;
+    }
+    const totalWeight = sum(funds.map((fund) => fund.monthlyContribution ?? 0));
+    let assigned = 0;
+    for (const [index, fund] of funds.entries()) {
+      const share =
+        index === funds.length - 1
+          ? amount - assigned
+          : Math.floor(
+              (amount * (fund.monthlyContribution ?? 0)) / totalWeight,
+            );
+      assigned += share;
+      const transactionId = `auto-pac-${month}-${fund.id}`;
+      if (
+        d.transactions.some((transaction) => transaction.id === transactionId)
+      )
+        continue;
+      await db.transactions.add({
+        id: transactionId,
+        accountId: account.id,
+        type: "investment",
+        amount: share,
+        date,
+        categoryId: "",
+        description: `PAC automatico · ${fund.name}`,
+        investmentId: fund.id,
+        createdAt: new Date().toISOString(),
+      });
+      await db.investments.update(fund.id, {
+        currentValue: fund.currentValue + share,
+        investedCapital:
+          fund.investedCapital === undefined
+            ? undefined
+            : fund.investedCapital + share,
+      });
+      await db.investmentTransactions.add({
+        id: `auto-pac-investment-${month}-${fund.id}`,
+        investmentId: fund.id,
+        type: "contribution",
+        amount: share,
+        date,
+        notes: "PAC automatico mensile",
+      });
+    }
+    await db.settings.update("main", { autoPacLastMonth: month });
+    result = "applied";
+  });
+  return result;
 }
 export async function resetData() {
   await clearRecovery();
@@ -264,6 +357,11 @@ export async function resetData() {
       firstDayOfMonth: 1,
       weights: {},
       theme: "light",
+      dataVersion: 2,
+      autoPacEnabled: true,
+      autoPacAmount: 25000,
+      autoPacDay: 3,
+      autoPacLastMonth: today().slice(0, 7),
     });
   });
 }

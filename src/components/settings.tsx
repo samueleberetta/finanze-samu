@@ -56,6 +56,9 @@ export function SettingsPage({
                   monthlyExpenseEstimate: cents(String(f.get("monthly"))),
                   emergencyFundTarget: cents(String(f.get("emergency"))),
                   firstDayOfMonth: Number(f.get("day")),
+                  autoPacEnabled: f.get("autoPacEnabled") === "on",
+                  autoPacAmount: cents(String(f.get("autoPacAmount"))),
+                  autoPacDay: Number(f.get("autoPacDay")),
                   weights: Object.fromEntries(
                     d.goals.map((g) => [g.id, Number(f.get(g.id))]),
                   ),
@@ -89,6 +92,36 @@ export function SettingsPage({
                 min="1"
                 max="28"
                 defaultValue={s.firstDayOfMonth}
+                required
+              />
+            </Field>
+            <h3 className="spaced">PAC automatico BPM</h3>
+            <p className="muted">
+              Alla prima apertura dal giorno scelto, sposta la somma da BPM ai
+              tre fondi in proporzione ai loro versamenti mensili.
+            </p>
+            <Field label="Attivo">
+              <input
+                name="autoPacEnabled"
+                type="checkbox"
+                defaultChecked={s.autoPacEnabled ?? true}
+              />
+            </Field>
+            <Field label="Importo mensile (€)">
+              <input
+                name="autoPacAmount"
+                inputMode="decimal"
+                defaultValue={inputMoney(s.autoPacAmount ?? 25000)}
+                required
+              />
+            </Field>
+            <Field label="Giorno del mese">
+              <input
+                name="autoPacDay"
+                type="number"
+                min="1"
+                max="28"
+                defaultValue={s.autoPacDay ?? 3}
                 required
               />
             </Field>

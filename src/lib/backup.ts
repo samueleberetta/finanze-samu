@@ -149,6 +149,14 @@ const schema = z
                 firstDayOfMonth: z.number().int().min(1).max(28),
                 weights: z.record(z.number().int().min(0).max(100)),
                 theme: z.enum(["light", "dark"]),
+                dataVersion: z.number().int().positive().optional(),
+                autoPacEnabled: z.boolean().optional(),
+                autoPacAmount: amount.positive().optional(),
+                autoPacDay: z.number().int().min(1).max(28).optional(),
+                autoPacLastMonth: z
+                  .string()
+                  .regex(/^\d{4}-\d{2}$/)
+                  .optional(),
               })
               .strict(),
           )
